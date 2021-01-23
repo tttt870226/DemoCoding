@@ -131,4 +131,95 @@
     return deviceModel;
 }
 
+//判断字符串是否只包含数字  主要用来判断是否是全数字的手机号
++ (BOOL)isNum:(NSString *)checkedNumString {
+    if (!checkedNumString.length) {
+        return NO;
+    }
+    checkedNumString = [checkedNumString stringByTrimmingCharactersInSet:[NSCharacterSet decimalDigitCharacterSet]];
+    if(checkedNumString.length > 0) {
+        return NO;
+    }
+    return YES;
+}
+
+
+/**
+ *判断相机权限是否开启
+ */
++(BOOL)isCameraAuth{
+    NSString *mediaType = AVMediaTypeVideo;//读取媒体类型
+    AVAuthorizationStatus authStatus = [AVCaptureDevice authorizationStatusForMediaType:mediaType];//读取设备授权状态
+    if(authStatus == AVAuthorizationStatusRestricted || authStatus == AVAuthorizationStatusDenied){ //没有相机权限
+        return YES;
+    }
+    return NO;
+}
+/**
+ *获取应用的窗口
+ */
++ (UIWindow *)findVisibleWindow {
+    UIWindow *visibleWindow = nil;
+    NSArray *windows = [[UIApplication sharedApplication] windows];
+    for (UIWindow *window in windows) {
+        if (!window.hidden && !visibleWindow) {
+            visibleWindow = window;
+        }
+        if ([UIWindow instancesRespondToSelector:@selector(rootViewController)]) {
+            if ([window rootViewController]) {
+                visibleWindow = window;
+                break;
+            }
+        }
+    }
+    return visibleWindow?:[[UIApplication sharedApplication].delegate window];
+}
+
+/**
+*手机中间4为隐藏
+*/
++(NSString*)secureTelNo:(NSString*)tel
+{
+    NSString* g_tel = tel;
+    if (tel.length == 11) {  // 普通手机号
+        NSString* pre = [tel substringToIndex:3];
+        NSString* aft = [tel substringFromIndex:7];
+        g_tel = [NSString stringWithFormat:@"%@****%@",pre,aft];
+    }else if(tel.length == 13)   // 86手机号
+    {
+        NSString* pre = [tel substringToIndex:5];
+        NSString* aft = [tel substringFromIndex:9];
+        g_tel = [NSString stringWithFormat:@"%@****%@",pre,aft];
+    }
+    
+    return g_tel;
+}
+
+/**
+*判断是否全面屏
+*/
++ (BOOL)isIPhoneX {
+    // 根据安全区域判断
+    if (@available(iOS 11.0, *)) {
+        CGFloat height = [[UIApplication sharedApplication] delegate].window.safeAreaInsets.bottom;
+        return (height > 0);
+    } else {
+        return NO;
+    }
+}
+
+/**
+ 播放语音文件声音
+ */
++ (void)playScanQRCodeFoundSound
+{
+    AudioServicesPlaySystemSound(kSystemSoundID_Vibrate);
+    
+    SystemSoundID   soundID;
+    NSString *soundPath = [[NSBundle mainBundle] pathForResource:@"qrcode" ofType:@"wav"];
+    CFURLRef soundFileURLRef = (__bridge CFURLRef) [NSURL fileURLWithPath:soundPath];
+    AudioServicesCreateSystemSoundID(soundFileURLRef, &soundID);
+    AudioServicesPlaySystemSound(soundID);
+}
+
 @end
