@@ -9,9 +9,8 @@
 #import "IOSUtilTool.h"
 #import <sys/utsname.h>
 
+static UILabel* toastView = nil;
 @implementation IOSUtilTool
-
-
 +(void)getDeviceInfo
 {
     //设备名称
@@ -221,5 +220,49 @@
     AudioServicesCreateSystemSoundID(soundFileURLRef, &soundID);
     AudioServicesPlaySystemSound(soundID);
 }
-
+/**
+ *弹出toast
+ */
++ (void)toastTip:(NSMutableDictionary*)message_dic config:(NSMutableDictionary*)config_dic  superView:(UIView*)superView{
+    NSString* tip_msg = [config_dic valueForKey:@"tipMsg"];
+    NSString* userName= [message_dic valueForKey:@"userName"];
+    if (userName == nil || [userName isKindOfClass:[NSNull class]] || [userName isEqualToString:@""]) { //如果消息体里没有对方名字，改成对方两字
+        userName = @"对方";
+    }
+    NSString* toastInfo = [tip_msg stringByReplacingOccurrencesOfString:@"#{userName}" withString:userName];
+    
+    if (!toastInfo) {
+        return;
+    }
+    if (![[NSThread currentThread] isMainThread]) {
+        dispatch_async(dispatch_get_main_queue(), ^{
+            [IOSUtilTool toastTip:message_dic config:config_dic superView:superView];
+        });
+        return;
+    }
+    CGRect frameRC = [[UIScreen mainScreen] bounds];
+    frameRC.origin.y = frameRC.size.height/2+100;
+    if (!toastView) {
+        toastView = [[UILabel alloc] init];
+    }
+    toastView.layer.masksToBounds = YES;
+    toastView.layer.cornerRadius = 3;
+    toastView.font = [UIFont systemFontOfSize:15];
+    toastView.numberOfLines = 0;
+    toastView.textColor = [UIColor whiteColor];
+    toastView.backgroundColor = [[UIColor blackColor] colorWithAlphaComponent:0.8];
+    toastView.textAlignment = NSTextAlignmentCenter;
+    CGSize sizeToFit = [toastInfo boundingRectWithSize:CGSizeMake([[UIScreen mainScreen] bounds].size.width-40, CGFLOAT_MAX) options:NSStringDrawingTruncatesLastVisibleLine | NSStringDrawingUsesLineFragmentOrigin | NSStringDrawingUsesFontLeading attributes:@{NSFontAttributeName:toastView.font} context:nil].size;
+    frameRC.size.height = sizeToFit.height+10;
+    frameRC.size.width = sizeToFit.width+20;
+    frameRC.origin.x = 20+([[UIScreen mainScreen] bounds].size.width-40-frameRC.size.width)/2;
+    toastView.frame = frameRC;
+    toastView.text = toastInfo;
+    [superView addSubview:toastView];
+    dispatch_time_t popTime = dispatch_time(DISPATCH_TIME_NOW, 1.5 * NSEC_PER_SEC);
+    dispatch_after(popTime, dispatch_get_main_queue(), ^() {
+        [toastView removeFromSuperview];
+        toastView = nil;
+    });
+}
 @end
