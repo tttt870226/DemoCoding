@@ -265,4 +265,32 @@ static UILabel* toastView = nil;
         toastView = nil;
     });
 }
+
+//剪切图片
++ (UIImage *)clipImage:(UIImage *)image imageoritation:(UIImageOrientation)oritation withRect:(CGRect)rect
+{
+    CGImageRef imageRef = CGImageCreateWithImageInRect([image CGImage], rect);
+    UIImage *clipImage = [UIImage imageWithCGImage:imageRef scale:image.scale orientation:oritation];//UIImageOrientationLeft
+    CGImageRelease(imageRef);
+    return clipImage;
+}
+/**
+ *调整图片大小 将大图片画到一个小尺寸画布上
+ */
++ (UIImage*)resizeImage:(UIImage*)image toWidth:(NSInteger)width height:(NSInteger)height{
+    CGSize size = CGSizeMake(width, height);
+    if (NULL != UIGraphicsBeginImageContextWithOptions)
+        UIGraphicsBeginImageContextWithOptions(size, NO, 0);
+    else
+        UIGraphicsBeginImageContext(size);
+    CGContextRef context = UIGraphicsGetCurrentContext();
+    CGContextTranslateCTM(context, 0.0, height);
+    CGContextScaleCTM(context, 1.0, -1.0);
+    CGContextSetBlendMode(context, kCGBlendModeCopy);
+    CGContextDrawImage(context, CGRectMake(0.0, 0.0, width, height), image.CGImage);
+    // Retrieve the UIImage from the current context
+    UIImage *imageOut = UIGraphicsGetImageFromCurrentImageContext();
+    UIGraphicsEndImageContext();
+    return imageOut;
+}
 @end
