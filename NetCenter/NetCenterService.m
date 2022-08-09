@@ -10,7 +10,7 @@
 
 @implementation NetCenterService
 
-- (NSString*)getPrams:(NSDictionary*)params{
++ (NSString*)getPrams:(NSDictionary*)params{
     if (!params||params.count == 0) {
         return @"";
     }
@@ -19,9 +19,7 @@
         [mutableStr appendFormat:@"%@=",key];
         [mutableStr appendFormat:@"%@&",obj];
     }];
-    
     [mutableStr deleteCharactersInRange:NSMakeRange(mutableStr.length-1, 1)];
-    
     return mutableStr;
 }
 /**
@@ -33,37 +31,30 @@
  @param cookies cookies
  @param block 回调
  */
-- (NSURLSessionTask *)requestWithMethods:(NSString *)method
++ (NSURLSessionTask *)requestWithMethods:(NSString *)method
                                      url:(NSString *)url
                                   params:(NSDictionary *)params
                                  cookies:(NSArray *)cookies
                                    block:(void (^)(NSData * _Nullable data, NSURLResponse * _Nullable response, NSError * _Nullable error))block {
     NSMutableURLRequest *request = nil;
-    
     request = [NSMutableURLRequest requestWithURL:[NSURL URLWithString:url]];
-    
-    
     if ([method isEqualToString:@"GET"]) {
         NSString *body = [self getPrams:params];
         if (body.length > 0) {
             url = [url stringByAppendingFormat:@"?%@",body];
-            NSCharacterSet* set = [[NSCharacterSet characterSetWithCharactersInString:@"?!@#$^&%*+,:;='\"`<>()[]{}/\\| "] invertedSet];
-            url = [url stringByAddingPercentEncodingWithAllowedCharacters:set];
-            //url = [url stringByAddingPercentEscapesUsingEncoding:NSUTF8StringEncoding];
+            url = [url stringByAddingPercentEncodingWithAllowedCharacters:[NSCharacterSet URLQueryAllowedCharacterSet]];
+//            NSCharacterSet* set = [[NSCharacterSet characterSetWithCharactersInString:@"?!@#$^&%*+,:;='\"`<>()[]{}/\\| "] invertedSet];
+//            url = [url stringByAddingPercentEncodingWithAllowedCharacters:set];
         }
         request = [NSMutableURLRequest requestWithURL:[NSURL URLWithString:url]];
-        
-
     }else if ([method isEqualToString:@"POST"]) {
         NSData *data = [NSJSONSerialization dataWithJSONObject:params
                                                        options:NSJSONReadingMutableLeaves | NSJSONReadingAllowFragments
                                                          error:nil];
         NSString *bodys = [[NSString alloc] initWithData:data
                                                 encoding:NSUTF8StringEncoding];
-        
         NSData *bodyData = [bodys dataUsingEncoding: NSUTF8StringEncoding];
         [request setHTTPBody: bodyData];
-        
     }
     request.HTTPMethod = method;
     request.timeoutInterval = 30;
@@ -100,7 +91,7 @@
  @param cookies cookies
  @param block 回调
  */
-- (NSURLSessionTask *)upLoadFile:(NSString *)method
++ (NSURLSessionTask *)upLoadFile:(NSString *)method
                                      url:(NSString *)url
                                   params:(NSData *)data
                                  cookies:(NSArray *)cookies
@@ -141,8 +132,7 @@
 }
 
 #pragma mark -表单拼接
-
-- (NSString *)getRandomStringWithLength:(int)length isContainNum:(BOOL)isContainNum{
++ (NSString *)getRandomStringWithLength:(int)length isContainNum:(BOOL)isContainNum{
     NSString *resultStr = [[NSString alloc] init];
     for (NSInteger i = 0; i< length; i++) {
         NSInteger num = isContainNum ? arc4random_uniform(75)+48:arc4random_uniform(58)+65;
@@ -162,7 +152,7 @@
      fileName:文件名称
      params:其他的参数
      */
-- (NSData *)getBodyDataWithFileData:(NSData *)fileData fileName:(NSString *)fileName params:(NSDictionary *)params boundary:(NSString*) boundary{
++ (NSData *)getBodyDataWithFileData:(NSData *)fileData fileName:(NSString *)fileName params:(NSDictionary *)params boundary:(NSString*) boundary{
     NSString *KNewLineString = @"\r\n";
     NSData *KNewLine = [KNewLineString dataUsingEncoding:NSUTF8StringEncoding];
     NSMutableData *bodyData = [[NSMutableData alloc] init];
